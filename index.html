@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>跑酷游戏 - 终极版</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            background: linear-gradient(180deg, #87CEEB 0%, #B0E0E6 60%, #98FB98 100%);
+        }
+        #gameOver, #startScreen, #levelComplete {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, rgba(34, 45, 65, 0.98), rgba(45, 55, 75, 0.98));
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            display: none;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            min-width: 300px;
+        }
+        #startScreen {
+            display: block;
+        }
+        #startScreen h1 {
+            background: linear-gradient(135deg, #4CAF50, #8BC34A);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 25px;
+            font-size: 2.5em;
+            text-shadow: 0 2px 10px rgba(76, 175, 80, 0.3);
+        }
+        #startScreen p {
+            margin-bottom: 20px;
+            line-height: 1.8;
+            font-size: 1.1em;
+        }
+        .btn {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(76, 175, 80, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: 0.5s;
+        }
+        .btn:hover::before {
+            left: 100%;
+        }
+        .btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 30px rgba(76, 175, 80, 0.6);
+        }
+        .btn:active {
+            transform: translateY(-1px) scale(0.98);
+        }
+        #score, #highScore, #level {
+            position: absolute;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px 24px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+        #score {
+            top: 15px;
+            left: 15px;
+            font-size: 22px;
+            color: #2c3e50;
+        }
+        #highScore {
+            top: 15px;
+            right: 15px;
+            font-size: 18px;
+            color: #FF9800;
+        }
+        #level {
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 20px;
+            color: #9C27B0;
+        }
+        #instructions {
+            font-size: 14px;
+            color: #aaa;
+            margin-top: 25px;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+        #mobileControls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: none;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 20;
+        }
+        #leftButton, #rightButton, #jumpButton {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid rgba(255,255,255,0.5);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            touch-action: manipulation;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #leftButton {
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.8), rgba(41, 128, 185, 0.8));
+        }
+        #rightButton {
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.8), rgba(41, 128, 185, 0.8));
+        }
+        #jumpButton {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.8), rgba(67, 160, 71, 0.8));
+        }
+        #leftButton:active, #rightButton:active, #jumpButton:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        #pauseButton {
+            position: absolute;
+            top: 70px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 18px;
+            z-index: 20;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        #pauseButton:hover {
+            transform: scale(1.1);
+        }
+        #pauseScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, rgba(34, 45, 65, 0.98), rgba(45, 55, 75, 0.98));
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            display: none;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            min-width: 300px;
+            z-index: 30;
+        }
+        @media (max-width: 850px) {
+            canvas {
+                max-width: 100vw;
+                max-height: 70vh;
+            }
+            #mobileControls {
+                display: flex;
+            }
+            #score, #highScore, #level {
+                font-size: 14px;
+                padding: 8px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="score">得分: 0</div>
+        <div id="highScore">最高分: 0</div>
+        <div id="level">第 1 关</div>
+        <button id="pauseButton">⏸</button>
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+        <div id="mobileControls">
+            <button id="leftButton">◀</button>
+            <button id="jumpButton">⬆</button>
+            <button id="rightButton">▶</button>
+        </div>
+        <div id="startScreen">
+            <h1>🚀 跑酷游戏</h1>
+            <p>🎮 电脑：</p>
+            <p>&nbsp;&nbsp;• 左/右箭头键：左右移动</p>
+            <p>&nbsp;&nbsp;• 空格键 / 上箭头键：跳跃</p>
+            <p>&nbsp;&nbsp;• P键：暂停/继续</p>
+            <p>📱 手机：点击屏幕上的跳跃按钮</p>
+            <p>长按可以跳得更高哦！</p>
+            <p>⚠️ 第2关开始会有小怪出现！</p>
+            <button class="btn" id="startButton">开始游戏</button>
+            <div id="instructions">💡 每关需要达到指定分数才能过关</div>
+        </div>
+        <div id="pauseScreen">
+            <h2>⏸ 游戏暂停</h2>
+            <button class="btn" id="resumeButton">继续游戏</button>
+            <button class="btn" id="restartFromPauseButton">重新开始</button>
+        </div>
+        <div id="levelComplete">
+            <h2>🎉 恭喜过关！</h2>
+            <p>准备进入第 <span id="nextLevel">2</span> 关</p>
+            <button class="btn" id="nextLevelButton">继续</button>
+        </div>
+        <div id="gameOver">
+            <h2>💥 游戏结束</h2>
+            <p>最终得分: <span id="finalScore">0</span></p>
+            <p>到达第 <span id="finalLevel">1</span> 关</p>
+            <button class="btn" id="restartButton">再来一局</button>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
